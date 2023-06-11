@@ -1,0 +1,9 @@
+pylama
+pylint
+mypy
+yapf
+flake8
+types-PyYAML
+pandas-stubs
+yamllint
+pyright

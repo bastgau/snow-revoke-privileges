@@ -1,0 +1,39 @@
+{
+    "debug.internalConsoleOptions": "neverOpen",
+    "python.terminal.activateEnvironment": true,
+    "python.defaultInterpreterPath": "/workspaces/app/.venv/bin/python",
+    "python.linting.pylamaEnabled": false,
+    "python.linting.pylamaPath": "/workspaces/app/.venv/bin/pylama",
+    "python.linting.mypyEnabled": false,
+    "python.linting.mypyPath": "/workspaces/app/.venv/bin/mypy",
+    "python.linting.mypyArgs": [],
+    "python.linting.pylintEnabled": true,
+    "python.linting.pylintPath": "/workspaces/app/.venv/bin/pylint",
+    "python.linting.flake8Enabled": false,
+    "python.linting.flake8Path": "/workspaces/app/.venv/bin/flake8",
+    "python.linting.enabled": true,
+    "python.formatting.provider": "yapf",
+    "python.formatting.yapfPath": "/workspaces/app/.venv/bin/yapf",
+    "editor.formatOnSave": true,
+    "files.trimTrailingWhitespace": true,
+    "files.trimFinalNewlines": true,
+    "files.insertFinalNewline": true,
+    "files.eol": "\n",
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.mypy_cache": true,
+        "**/.venv": true
+    },
+    "python.analysis.typeCheckingMode": "strict",
+    "python.analysis.importFormat": "absolute",
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.logLevel": "Trace",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportUnusedVariable": "information"
+    },
+    "python.languageServer": "Pylance",
+    "python.analysis.exclude": [
+        "**/.venv"
+    ],
+    "docwriter.style": "Google"
+}

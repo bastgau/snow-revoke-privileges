@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "njpwerner.autodocstring",
+        "vscode-icons-team.vscode-icons",
+        "mohsen1.prettify-json",
+        "njqdev.vscode-python-typehint",
+        "Gruntfuggly.todo-tree"
+    ]
+}
