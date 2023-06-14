@@ -8,6 +8,14 @@ BOLD="\e[1m"
 
 ENDCOLOR="\e[0m"
 
+echo -e "\n${YELLOW}> YAML Lint.${ENDCOLOR}"
+yamllint /workspaces/app/snowflake_reset/
+
+if [ "$?" -eq 0 ]
+then
+    echo -e "${GREEN}${BOLD}Success: no issues found${ENDCOLOR}"
+fi
+
 echo -e "\n${YELLOW}> Pyright / Pylance.${ENDCOLOR}"
 result=$(pyright /workspaces/app/snowflake_reset/)
 
@@ -16,14 +24,6 @@ then
     echo -e "${GREEN}${BOLD}Success: $result${ENDCOLOR}"
 else
     echo -e $result
-fi
-
-echo -e "\n${YELLOW}> YAML Lint.${ENDCOLOR}"
-yamllint /workspaces/app/snowflake_reset/
-
-if [ "$?" -eq 0 ]
-then
-    echo -e "${GREEN}${BOLD}Success: no issues found${ENDCOLOR}"
 fi
 
 echo -e "\n${YELLOW}> Pylint.${ENDCOLOR}"
