@@ -18,10 +18,13 @@ jobs:
           python3.10 -m venv env
           source env/bin/activate
           echo "VIRTUAL ENV:" $VIRTUAL_ENV
-          $VIRTUAL_ENV/bin/pip install --upgrade pip
-          $VIRTUAL_ENV/bin/pip install -r requirements.txt
-          $VIRTUAL_ENV/bin/pip install -r requirements-dev.txt
-      - run: $VIRTUAL_ENV/bin/yamllint ./snowflake_reset
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+          .venv/bin/pip install -r requirements-dev.txt
+      - name: YAML Lint
+        run: |
+          . .venv/bin/activate
+          .venv/bin/yamllint ./snowflake_reset
       - run: $VIRTUAL_ENV/bin/pyright ./snowflake_reset
       - run: $VIRTUAL_ENV/bin/pylint ./snowflake_reset
       - run: $VIRTUAL_ENV/bin/flake8 ./snowflake_reset
