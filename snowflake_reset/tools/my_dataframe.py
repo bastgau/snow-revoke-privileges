@@ -52,7 +52,8 @@ def create_column(current_dataframe: pd.DataFrame, columns: Dict[str, Any]) -> N
     """
 
     for column_name, value in columns.items():
-        current_dataframe[column_name] = value
+        if column_name not in current_dataframe:
+            current_dataframe[column_name] = value
 
 
 def set_column_names(current_dataframe: pd.DataFrame, field_names: List[str]) -> None:  # pylint: disable=unused-variable
