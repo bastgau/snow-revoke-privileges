@@ -71,22 +71,42 @@ def set_column_names(current_dataframe: pd.DataFrame, field_names: List[str]) ->
         current_dataframe.columns = pd.Index(field_names)
 
 
-def drop_column(current_dataframe: pd.DataFrame, columns: List[str]) -> pd.DataFrame:  # pylint: disable=unused-variable
+def keep_columns(current_dataframe: pd.DataFrame, expected_columns: List[str]) -> pd.DataFrame:  # pylint: disable=unused-variable
+    """
+    The function drops all non specified columns from a pandas DataFrame.
+
+    Args:
+      current_dataframe (pd.DataFrame): A pandas DataFrame that contains the data to be filtered.
+      expected_columns (List[str]): A list of columns that must be kept in the input dataframe.
+
+    Returns:
+      a pandas DataFrame without the dropped columns.
+    """
+
+    columns: List[str] = current_dataframe.columns.values.tolist()  # type: ignore
+    columns = [column for column in columns if column not in expected_columns and column in current_dataframe]
+
+    if len(columns) > 0:
+        return current_dataframe.drop(columns, axis=1)
+
+    return current_dataframe
+
+
+def drop_columns(current_dataframe: pd.DataFrame, columns: List[str]) -> pd.DataFrame:  # pylint: disable=unused-variable
     """
     The function drops specified columns from a pandas DataFrame if they exist.
 
     Args:
-      current_dataframe (pd.DataFrame): A pandas DataFrame that represents the current dataset.
-      columns (List[str]): A list of strings representing the names of the columns to be dropped from
-    the current_dataframe.
+      current_dataframe (pd.DataFrame): A pandas DataFrame that contains the data to be filtered.
+      columns (List[str]): A list of columns to be dropped in the input dataframe.
 
     Returns:
-      a pandas DataFrame with the specified columns dropped. If the input DataFrame is empty, it returns
-    the same empty DataFrame.
+      a pandas DataFrame without the dropped columns.
     """
 
-    if len(current_dataframe) > 0:
-        columns = [column for column in columns if column in current_dataframe]
+    columns = [column for column in columns if column in current_dataframe]
+
+    if len(columns) > 0:
         return current_dataframe.drop(columns, axis=1)
 
     return current_dataframe
