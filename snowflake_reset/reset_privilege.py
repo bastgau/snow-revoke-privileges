@@ -51,7 +51,7 @@ class ResetPrivilege:  # pylint: disable=unused-variable
 
         cnx: SnowflakeConnection = snow_configure(config["snowflake"]["credentials"], admin_role)
 
-        all_objects: pd.DataFrame = pd.DataFrame()
+        all_objects: pd.DataFrame = pd.DataFrame([])
 
         snow_objects = self.prepare_databases(cnx)
         all_objects = concat_dataframe([all_objects, snow_objects])
@@ -71,7 +71,7 @@ class ResetPrivilege:  # pylint: disable=unused-variable
 
     def prepare_databases(self, cnx: SnowflakeConnection) -> pd.DataFrame:
         """
-        The function prepares a Pandas DataFrame containing information about all databases.
+        The function prepares a pandas DataFrame containing information about all databases.
 
         Args:
           cnx (SnowflakeConnection): The parameter `cnx` is a SnowflakeConnection object, which represents a
@@ -83,16 +83,19 @@ class ResetPrivilege:  # pylint: disable=unused-variable
         """
 
         snow_objects: pd.DataFrame = snow_fetch_pandas_all(cnx, "SHOW DATABASES")
-        snow_objects = snow_objects.loc[snow_objects["kind"] == "STANDARD"]
-        snow_objects = drop_column(snow_objects, ["created_on", "is_default", "is_current", "comment", "options", "kind", "retention_time", "origin", "owner"])
-        rename_column(snow_objects, {"name": "DATABASE_NAME"})
-        create_column(snow_objects, {"SCHEMA_NAME": None, "OBJECT_NAME": None, "OBJECT_TYPE": "DATABASE"})
-        concat_column(snow_objects, "KEY_OBJECT", ["DATABASE_NAME", "SCHEMA_NAME", "OBJECT_NAME"], ".")
+
+        if len(snow_objects) > 0:
+            snow_objects = snow_objects.loc[snow_objects["kind"] == "STANDARD"]
+            snow_objects = drop_column(snow_objects, ["created_on", "is_default", "is_current", "comment", "options", "kind", "retention_time", "origin", "owner"])
+            rename_column(snow_objects, {"name": "DATABASE_NAME"})
+            create_column(snow_objects, {"SCHEMA_NAME": None, "OBJECT_NAME": None, "OBJECT_TYPE": "DATABASE", "ARGUMENTS": None})
+            concat_column(snow_objects, "KEY_OBJECT", ["DATABASE_NAME", "SCHEMA_NAME", "OBJECT_NAME"], ".")
+
         return snow_objects
 
     def prepare_schemas(self, cnx: SnowflakeConnection) -> pd.DataFrame:
         """
-        The function prepares a Pandas DataFrame containing information about all schemas.
+        The function prepares a pandas DataFrame containing information about all schemas.
 
         Args:
           cnx (SnowflakeConnection): The parameter `cnx` is a SnowflakeConnection object, which is used to
@@ -103,16 +106,19 @@ class ResetPrivilege:  # pylint: disable=unused-variable
         """
 
         snow_objects: pd.DataFrame = snow_fetch_pandas_all(cnx, "SHOW SCHEMAS")
-        snow_objects = drop_column(snow_objects, ["created_on", "is_default", "is_current", "comment", "options", "retention_time", "owner"])
-        snow_objects = snow_objects.loc[(snow_objects.loc[:, "database_name"] != "SNOWFLAKE") & (snow_objects.loc[:, "name"] != "INFORMATION_SCHEMA")]
-        rename_column(snow_objects, {"database_name": "DATABASE_NAME", "name": "SCHEMA_NAME"})
-        create_column(snow_objects, {"OBJECT_NAME": None, "OBJECT_TYPE": "SCHEMA"})
-        concat_column(snow_objects, "KEY_OBJECT", ["DATABASE_NAME", "SCHEMA_NAME", "OBJECT_NAME"], ".")
+
+        if len(snow_objects) > 0:
+            snow_objects = drop_column(snow_objects, ["created_on", "is_default", "is_current", "comment", "options", "retention_time", "owner"])
+            snow_objects = snow_objects.loc[(snow_objects.loc[:, "database_name"] != "SNOWFLAKE") & (snow_objects.loc[:, "name"] != "INFORMATION_SCHEMA")]
+            rename_column(snow_objects, {"database_name": "DATABASE_NAME", "name": "SCHEMA_NAME"})
+            create_column(snow_objects, {"OBJECT_NAME": None, "OBJECT_TYPE": "SCHEMA", "ARGUMENTS": None})
+            concat_column(snow_objects, "KEY_OBJECT", ["DATABASE_NAME", "SCHEMA_NAME", "OBJECT_NAME"], ".")
+
         return snow_objects
 
     def prepare_objects(self, cnx: SnowflakeConnection) -> pd.DataFrame:
         """
-        The function prepares a Pandas DataFrame containing information about all objects (excluded database and
+        The function prepares a pandas DataFrame containing information about all objects (excluded database and
         schemas).
 
         Args:
@@ -123,11 +129,85 @@ class ResetPrivilege:  # pylint: disable=unused-variable
           a pandas DataFrame containing information about all the objects (excluded databases and schemas).
         """
 
-        snow_objects: pd.DataFrame = snow_fetch_pandas_all(cnx, "SHOW TABLES")
-        snow_objects = drop_column(snow_objects, ["created_on", "comment", "cluster_by", "rows", "bytes", "owner", "retention_time", "automatic_clustering", "change_tracking", "is_external"])
-        rename_column(snow_objects, {"database_name": "DATABASE_NAME", "schema_name": "SCHEMA_NAME", "name": "OBJECT_NAME", "kind": "OBJECT_TYPE"})
-        concat_column(snow_objects, "KEY_OBJECT", ["DATABASE_NAME", "SCHEMA_NAME", "OBJECT_NAME"], ".")
-        return snow_objects
+        database_objects: List[str] = [
+            # "EXTERNAL FUNCTION",
+            "EXTERNAL TABLE",
+            "FILE FORMAT",  # "MATERIALIZED VIEW",
+            # "PIPE",
+            "PROCEDURE",
+            "SEQUENCE",
+            "STAGE",  #"STREAM",
+            "TABLE",  #"TASK",  # "USER FUNCTION",
+            "VIEW",
+        ]
+
+        all_objects: pd.DataFrame = pd.DataFrame([])
+
+        for database_object in database_objects:
+
+            snow_objects: pd.DataFrame = snow_fetch_pandas_all(cnx, f"SHOW {database_object}S")
+
+            if len(snow_objects) == 0:
+                continue
+
+            databases: List[str] = ["SNOWFLAKE", "WORKSHEETS_APP"]
+            if database_object == "PROCEDURE":
+                snow_objects = snow_objects.loc[(~snow_objects.loc[:, "catalog_name"].isin(databases)) & (snow_objects.loc[:, "schema_name"] != "INFORMATION_SCHEMA")]  # type: ignore
+                snow_objects = snow_objects.loc[(snow_objects.loc[:, "is_builtin"] != "Y")]  # type: ignore
+                rename_column(snow_objects, {"arguments": "ARGUMENTS", "catalog_name": "DATABASE_NAME", "schema_name": "SCHEMA_NAME", "name": "OBJECT_NAME"})
+                concat_column(snow_objects, "KEY_OBJECT", ["DATABASE_NAME", "SCHEMA_NAME", "OBJECT_NAME"], ".")
+            else:
+                snow_objects = snow_objects.loc[(~snow_objects.loc[:, "database_name"].isin(databases)) & (snow_objects.loc[:, "schema_name"] != "INFORMATION_SCHEMA")]  # type: ignore
+                rename_column(snow_objects, {"database_name": "DATABASE_NAME", "schema_name": "SCHEMA_NAME", "name": "OBJECT_NAME"})
+                concat_column(snow_objects, "KEY_OBJECT", ["DATABASE_NAME", "SCHEMA_NAME", "OBJECT_NAME"], ".")
+                create_column(snow_objects, {"ARGUMENTS": None})
+
+            if len(snow_objects) == 0:
+                    continue
+
+            snow_objects = drop_column(
+                snow_objects,
+                [
+                    "next_value",
+                    "interval",
+                    "text",
+                    "is_secure",
+                    "reserved",
+                    "is_materialized",
+                    "created_on",
+                    "comment",
+                    "cluster_by",
+                    "rows",
+                    "bytes",
+                    "owner",
+                    "retention_time",
+                    "automatic_clustering",
+                    "change_tracking",
+                    "is_external",
+                    "kind",
+                    "url",
+                    "has_credentials",
+                    "has_encryption_key",
+                    "region",
+                    "type",
+                    "cloud",
+                    "notification_channel",
+                    "storage_integration",
+                    "is_table_function",
+                    "valid_for_clustering",
+                    "is_builtin",
+                    "is_aggregate",
+                    "is_ansi",
+                    "min_num_arguments",
+                    "max_num_arguments",
+                    "description"
+                ]
+            )
+
+            create_column(snow_objects, {"OBJECT_TYPE": database_object})
+            all_objects = concat_dataframe([all_objects, snow_objects])
+
+        return all_objects
 
     def prepare_privileges(self, cnx: SnowflakeConnection, all_objects: pd.DataFrame) -> pd.DataFrame:
         """
@@ -145,7 +225,7 @@ class ResetPrivilege:  # pylint: disable=unused-variable
         parameter.
         """
 
-        all_privileges: pd.DataFrame = pd.DataFrame()
+        all_privileges: pd.DataFrame = pd.DataFrame([])
 
         for index, current_object in all_objects.iterrows():  # type: ignore # pylint: disable=unused-variable
 
@@ -202,6 +282,8 @@ class ResetPrivilege:  # pylint: disable=unused-variable
             grantee_name: str = str(current_privilege.get(key="GRANTEE_NAME"))
             granted_on: str = str(current_privilege.get(key="GRANTED_ON")).replace("_", " ")
             granted_to: str = str(current_privilege.get(key="GRANTED_TO"))
+
+			# SHOW GRANTS ON PROCEDURE PRFR_PRD_LND.PRFR_BUDGET_SCH.STPROC1(FLOAT)
 
             if current_privilege["FUTURE"] is False and privilege != "OWNERSHIP":
                 request = f"REVOKE {privilege} ON {granted_on} {key_object} FROM {granted_to} {grantee_name}"

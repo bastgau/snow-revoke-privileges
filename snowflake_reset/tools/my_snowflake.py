@@ -34,7 +34,7 @@ def configure(config: Dict[str, Any], role: str) -> SnowflakeConnection:  # pyli
 def fetch_pandas_all(cnx: SnowflakeConnection, request: str) -> pd.DataFrame:  # pylint: disable=unused-variable
     """
     The function fetches data from a Snowflake database using a provided SQL query and returns it as a
-    Pandas DataFrame.
+    pandas DataFrame.
 
     Args:
       cnx (SnowflakeConnection): The parameter `cnx` is a SnowflakeConnection object, which represents a
