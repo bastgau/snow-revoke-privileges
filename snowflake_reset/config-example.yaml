@@ -1,6 +1,6 @@
 ---
 snowflake:
-  credentials:
+  credentials
     account: xxxxxx.west-europe.azure
     user: xxxxxx
     password: xxxxxx

@@ -3,7 +3,7 @@ name: Quality Code Review
 on: [push, pull_request]
 
 jobs:
-  linters:
+  Check code with linters:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -24,9 +24,33 @@ jobs:
         run: |
           . .venv/bin/activate
           .venv/bin/yamllint ./snowflake_reset
-      - run: $VIRTUAL_ENV/bin/pyright ./snowflake_reset
-      - run: $VIRTUAL_ENV/bin/pylint ./snowflake_reset
-      - run: $VIRTUAL_ENV/bin/flake8 ./snowflake_reset
-      - run: $VIRTUAL_ENV/bin/mypy ./snowflake_reset
-      - run: $VIRTUAL_ENV/bin/pylama ./snowflake_reset
-      - run: $VIRTUAL_ENV/bin/yapf ./snowflake_reset --recursive
+
+      - name: Pyright
+        run: |
+          . .venv/bin/activate
+          .venv/bin/pyright ./snowflake_reset
+
+      - name: Pylint
+        run: |
+          . .venv/bin/activate
+          .venv/bin/pylint ./snowflake_reset
+
+      - name: Flake8
+        run: |
+          . .venv/bin/activate
+          .venv/bin/flake8 ./snowflake_reset
+
+      - name: Mypy
+        run: |
+          . .venv/bin/activate
+          .venv/bin/mypy ./snowflake_reset
+
+      - name: Pylama
+        run: |
+          . .venv/bin/activate
+          .venv/bin/pylama ./snowflake_reset
+
+      - name: Yapf
+        run: |
+          . .venv/bin/activate
+          .venv/bin/yapf ./snowflake_reset --recursive
