@@ -3,7 +3,7 @@ name: Quality Code Review
 on: [push, pull_request]
 
 jobs:
-  Check code with linters:
+  linters:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -20,6 +20,7 @@ jobs:
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install -r requirements.txt
           .venv/bin/pip install -r requirements-dev.txt
+          
       - name: YAML Lint
         run: |
           . .venv/bin/activate
