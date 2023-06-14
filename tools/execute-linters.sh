@@ -46,8 +46,15 @@ echo -e "\n${YELLOW}> Mypy.${ENDCOLOR}"
 mypy /workspaces/app/snowflake_reset/
 
 echo -e "\n${YELLOW}> Pylama.${ENDCOLOR}"
-
 pylama /workspaces/app/snowflake_reset/
+
+if [ "$?" -eq 0 ]
+then
+    echo -e "${GREEN}${BOLD}Success: no issues found${ENDCOLOR}"
+fi
+
+echo -e "\n${YELLOW}> Yapf.${ENDCOLOR}"
+yapf --diff /workspaces/app/snowflake_reset/ --recursive
 
 if [ "$?" -eq 0 ]
 then
