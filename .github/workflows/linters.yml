@@ -20,7 +20,7 @@ jobs:
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install -r requirements.txt
           .venv/bin/pip install -r requirements-dev.txt
-          
+
       - name: YAML Lint
         run: |
           . .venv/bin/activate
@@ -34,7 +34,7 @@ jobs:
       - name: Pylint
         run: |
           . .venv/bin/activate
-          .venv/bin/pylint ./snowflake_reset
+          .venv/bin/pylint ./snowflake_reset  --score=false
 
       - name: Flake8
         run: |
@@ -54,4 +54,4 @@ jobs:
       - name: Yapf
         run: |
           . .venv/bin/activate
-          .venv/bin/yapf ./snowflake_reset --recursive
+          .venv/bin/yapf --diff ./snowflake_reset --recursive
