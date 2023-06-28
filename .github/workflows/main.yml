@@ -1,0 +1,218 @@
+name: Code Quality & Build
+#Trigger
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - development
+      - main
+      - master
+    paths:
+      - "src/snow_revoke_privileges/**"
+
+env:
+  PYTHON_VERSION: "3.11"
+  ARTIFACT_NAME: "snow-automatisation-rights"
+
+jobs:
+  check:
+    name: Check Python Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout GitHub Action"
+        uses: actions/checkout@v3
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies with Pip
+        run: |
+          python${{ env.PYTHON_VERSION }} -m venv .venv
+          source .venv/bin/activate
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+          .venv/bin/pip install -r requirements-dev.txt
+
+      - name: Initialize environment variables
+        run: |
+
+          CURRENT_PWD=$(pwd)
+          PYTHONPATH="$CURRENT_PWD/src"
+          echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
+          WORKINGPATH="$CURRENT_PWD"
+          echo "WORKINGPATH=$WORKINGPATH" >> $GITHUB_ENV
+
+      - name: Pyright
+        id: pyright
+        run: |
+          . $WORKINGPATH/.venv/bin/activate
+          pyright $PYTHONPATH -p $WORKINGPATH/tools/pyrightconfig.json
+
+      - name: Pylint
+        id: pylint
+        if: ${{ always() }}
+        run: |
+          . $WORKINGPATH/.venv/bin/activate
+          pylint $PYTHONPATH/snow_revoke_privileges --score=false
+
+      - name: Flake8
+        id: flake8
+        if: ${{ always() }}
+        run: |
+          . $WORKINGPATH/.venv/bin/activate
+          flake8 $PYTHONPATH/snow_revoke_privileges
+
+      - name: Mypy
+        id: mypy
+        if: ${{ always() }}
+        run: |
+          . $WORKINGPATH/.venv/bin/activate
+          mypy $PYTHONPATH/snow_revoke_privileges
+
+      - name: Pylama
+        id: pylama
+        if: ${{ always() }}
+        run: |
+          . $WORKINGPATH/.venv/bin/activate
+          pylama $PYTHONPATH/snow_revoke_privileges
+
+      - name: Yapf
+        id: yapf
+        if: ${{ always() }}
+        run: |
+          . $WORKINGPATH/.venv/bin/activate
+          yapf --diff $PYTHONPATH/snow_revoke_privileges --recursive
+
+      - name: Linter Results
+        if: (success() || failure()) && (steps.pylama.outcome == 'failure' || steps.pyright.outcome == 'failure' || steps.pylint.outcome == 'failure' || steps.flake8.outcome == 'failure' || steps.mypy.outcome == 'failure' || steps.yapf.outcome == 'failure')
+        run: |
+
+          echo "Pyright: ${{ steps.pyright.outcome }}"
+          echo "Pylint: ${{ steps.pylint.outcome }}"
+          echo "Pylint: ${{ steps.pylama.outcome }}"
+          echo "Flake8: ${{ steps.flake8.outcome }}"
+          echo "Mypy: ${{ steps.mypy.outcome }}"
+          echo "Yapf: ${{ steps.yapf.outcome }}"
+
+          echo "On failure, please check the previous steps to identify the linter issue(s)."
+          exit 1
+
+  unit_test:
+    name: Unit Tests Python
+    runs-on: ubuntu-latest
+    needs: [check]
+    steps:
+      - name: "Checkout GitHub Action"
+        uses: actions/checkout@v3
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies with Pip
+        run: |
+          python${{ env.PYTHON_VERSION }} -m venv .venv
+          source .venv/bin/activate
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+          .venv/bin/pip install -r requirements-test.txt
+
+      - name: Initialize environment variables
+        run: |
+
+          CURRENT_PWD=$(pwd)
+          PYTHONPATH="$CURRENT_PWD/src"
+          echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
+          WORKINGPATH="$CURRENT_PWD"
+          echo "WORKINGPATH=$WORKINGPATH" >> $GITHUB_ENV
+
+      - name: Pytest
+        id: pytest
+        run: |
+          . $WORKINGPATH/.venv/bin/activate
+          cd $WORKINGPATH
+          pytest tests -vv -s -n auto
+
+      - name: Coverage Analysis
+        id: coverage
+        run: |
+          . $WORKINGPATH/.venv/bin/activate
+          cd $WORKINGPATH
+          coverage run -m pytest tests -q --disable-warnings
+
+      - name: Coverage Report
+        id: coverage_report
+        run: |
+          . $WORKINGPATH/.venv/bin/activate
+          cd $WORKINGPATH
+          coverage report -m
+
+  configuration:
+    name: Check User Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout GitHub Action"
+        uses: actions/checkout@v3
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Initialize environment variables
+        run: |
+
+          CURRENT_PWD=$(pwd)
+          PYTHONPATH="$CURRENT_PWD/src"
+          echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
+          WORKINGPATH="$CURRENT_PWD"
+          echo "WORKINGPATH=$WORKINGPATH" >> $GITHUB_ENV
+
+      - name: Install dependencies with Pip
+        run: |
+          pip install yamllint
+
+      - name: "YAML Lint"
+        id: yaml_lint
+        run: |
+          yamllint $PYTHONPATH/snow_revoke_privileges
+
+      - name: Configuration Results
+        if: (success() || failure()) && (steps.yaml_lint.outcome == 'failure')
+        run: |
+
+          echo "YAML Lint: ${{ steps.yaml_lint.outcome }}"
+
+          echo "On failure, please check the previous steps to identify the linter issue(s)."
+          exit 1
+
+  build:
+    name: Build
+    needs: [check, configuration, unit_test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: "Checkout GitHub Action"
+        uses: actions/checkout@v3
+
+      - name: Initialize environment variables
+        run: |
+
+          CURRENT_PWD=$(pwd)
+          WORKINGPATH="$CURRENT_PWD"
+          echo "WORKINGPATH=$WORKINGPATH" >> $GITHUB_ENV
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: |
+            ${{ env.WORKINGPATH }}
+            !${{ env.WORKINGPATH }}/.devcontainer
+            !${{ env.WORKINGPATH }}/.git
+            !${{ env.WORKINGPATH }}/.github
+            !${{ env.WORKINGPATH }}/.vscode
+            !${{ env.WORKINGPATH }}/tests
+            !${{ env.WORKINGPATH }}/tools

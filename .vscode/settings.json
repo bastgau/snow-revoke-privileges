@@ -1,0 +1,75 @@
+{
+    "debug.internalConsoleOptions": "neverOpen",
+    "python.terminal.activateEnvironment": true,
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.cwd": "${workspaceFolder}",
+    // "python.linting.pylamaEnabled": false,
+    // "python.linting.pylamaPath": "${workspaceFolder}/.venv/bin/pylama",
+    "python.linting.mypyEnabled": false,
+    "python.linting.mypyPath": "${workspaceFolder}/.venv/bin/mypy",
+    "python.linting.mypyArgs": [],
+    "python.linting.pylintEnabled": false,
+    "python.linting.pylintPath": "${workspaceFolder}/.venv/bin/pylint",
+    // "python.linting.flake8Enabled": false,
+    // "python.linting.flake8Path": "${workspaceFolder}/.venv/bin/flake8",
+    // "python.formatting.provider": "black",
+    // "python.formatting.blackPath": "${workspaceFolder}/.venv/bin/black",
+    "editor.formatOnSaveMode": "file",
+    "python.formatting.provider": "yapf",
+    "python.formatting.yapfPath": "${workspaceFolder}/.venv/bin/yapf",
+    "editor.formatOnSave": true,
+    "files.trimTrailingWhitespace": true,
+    "files.trimFinalNewlines": true,
+    "files.insertFinalNewline": true,
+    "files.eol": "\n",
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.mypy_cache": true,
+        "**/.venv": true,
+        "**/.pytest_cache": true
+    },
+    "python.analysis.typeCheckingMode": "strict",
+    "python.analysis.importFormat": "absolute",
+    "python.analysis.diagnosticMode": "openFilesOnly",
+    "python.analysis.logLevel": "Trace",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportUnusedVariable": "information"
+    },
+    "python.languageServer": "Pylance",
+    "python.analysis.exclude": [
+        "**/.venv"
+    ],
+    "docwriter.style": "Google",
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.createEnvironment.contentButton": "hide",
+    "python.linting.maxNumberOfProblems": 50,
+    "cSpell.words": [
+        "ACCOUNTADMIN",
+        "dataframe",
+        "dataframes",
+        "dropna",
+        "externalbrowser",
+        "isin",
+        "iterrows",
+        "VARCHAR",
+        "yapf"
+    ],
+    "files.autoSaveDelay": 600000,
+    "cSpell.maxDuplicateProblems": 2,
+    "cSpell.maxNumberOfProblems": 25,
+    "cSpell.ignorePaths": [
+        "package-lock.json",
+        "node_modules",
+        "vscode-extension",
+        ".git/objects",
+        ".vscode",
+        ".vscode-insiders",
+        ".devcontainer",
+        ".github"
+    ]
+}
