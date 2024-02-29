@@ -33,6 +33,7 @@ jobs:
           source .venv/bin/activate
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install -r requirements.txt
+          .venv/bin/pip install -r requirements-dev.txt
 
       - name: Initialize environment variables
         run: |
