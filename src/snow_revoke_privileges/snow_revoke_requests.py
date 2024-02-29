@@ -37,7 +37,7 @@ class SnowRevokeRequests:  # pylint: disable=unused-variable
     def execute(self) -> None:
         """"..."""
 
-        self.__execute_part(self.grant_requests, "grants")
+        self.__execute_part(self.grant_requests, "revoke-grants")
         self.__execute_part(self.ownership_requests, "ownerships")
 
     def __execute_part(self, requests: List[str], request_type: str) -> None:

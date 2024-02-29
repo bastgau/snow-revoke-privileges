@@ -41,11 +41,11 @@ class SnowNewGrantRequest:  # pylint: disable=unused-variable
 
             for current_object in all_objects:
 
-                if current_object in ["DATABASE", "EXTERNAL FUNCTION", "EXTERNAL TABLE"]:
+                if current_object in ["EXTERNAL FUNCTION", "EXTERNAL TABLE"]:
                     continue
 
-                if current_object in ["SCHEMA"]:
-                    request = f"GRANT USAGE ON SCHEMA {schema['KEY_OBJECT']} TO ROLE {self.settings['new_owner']}"
+                if current_object in ["SCHEMA", "DATABASE"]:
+                    request = f"GRANT USAGE ON {current_object.upper()} {schema['KEY_OBJECT']} TO ROLE {self.settings['new_owner']}"
                     self.requests.append(request)
                     continue
 
@@ -57,7 +57,7 @@ class SnowNewGrantRequest:  # pylint: disable=unused-variable
     def execute(self) -> None:
         """"..."""
 
-        filename: str = "output-new_grants.txt"
+        filename: str = "output-new-grants.txt"
 
         if os.path.exists(filename):
             os.remove(filename)
