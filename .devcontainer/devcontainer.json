@@ -1,47 +1,66 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.245.2/containers/python-3
 {
-    "name": "Python 3",
-    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/app,type=bind",
-    "workspaceFolder": "/workspaces/app",
     "build": {
-        "dockerfile": "Dockerfile",
-        "context": "..",
         "args": {
-            // Update 'VARIANT' to pick a Python version: 3, 3.10, 3.9, 3.8, 3.7, 3.6
-            // Append -bullseye or -buster to pin to an OS version.
-            // Use -bullseye variants on local on arm64/Apple Silicon.
-            "VARIANT": "3.10-bullseye",
-            // Options
-            "NODE_VERSION": "lts/*"
-        }
+            "NODE_VERSION": "lts/*",
+            "VARIANT": "3.11-bullseye"
+        },
+        "context": "..",
+        "dockerfile": "Dockerfile"
     },
-    // Configure tool-specific properties.
+    "containerEnv": {
+        "HOME": "/home/vscode"
+    },
     "customizations": {
-        // Configure properties specific to VS Code.
         "vscode": {
-            // Add the IDs of extensions you want installed when the container is created.
             "extensions": [
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                "ms-vscode-remote.remote-containers"
-            ]
+                "ms-vscode-remote.remote-containers",
+                "eeyore.yapf",
+                "ms-python.pylint",
+                "ms-python.flake8"
+            ],
+            "settings": {
+                "debug.internalConsoleOptions": "neverOpen",
+                "editor.defaultFormatter": "eeyore.yapf",
+                "editor.formatOnSave": true,
+                "editor.formatOnSaveMode": "file",
+                "files.autoSaveDelay": 600000,
+                "files.eol": "\n",
+                "files.exclude": {
+                    "**/.mypy_cache": true,
+                    "**/.pytest_cache": true,
+                    "**/.venv": true,
+                    "**/__pycache__": true
+                },
+                "files.insertFinalNewline": true,
+                "files.trimFinalNewlines": true,
+                "files.trimTrailingWhitespace": true,
+                "python.analysis.diagnosticMode": "openFilesOnly",
+                "python.analysis.diagnosticSeverityOverrides": {
+                    "reportUnusedVariable": "information"
+                },
+                "python.analysis.exclude": [
+                    "**/.venv"
+                ],
+                "python.analysis.importFormat": "absolute",
+                "python.analysis.logLevel": "Trace",
+                "python.analysis.typeCheckingMode": "strict",
+                "python.createEnvironment.contentButton": "hide",
+                "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+                "python.languageServer": "Pylance",
+                "python.terminal.activateEnvironment": true,
+                "python.testing.pytestEnabled": false,
+                "python.testing.unittestEnabled": false
+            }
         }
     },
-    // Use 'forwardPorts' to make a list of ports inside the container available locally.
-    // "forwardPorts": [],
-    // Use 'postCreateCommand' to run commands after the container is created.
-    "postCreateCommand": "sudo chmod +x $WORKDIR/.devcontainer/install.sh && $WORKDIR/.devcontainer/install.sh",
-    // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-    // The following line must be uncomment for docker.
+    "name": "Python 3",
+    "postCreateCommand": "dos2unix $WORKDIR/.devcontainer/*.sh && sudo chmod +x $WORKDIR/.devcontainer/install.sh && $WORKDIR/.devcontainer/install.sh",
     "remoteUser": "vscode",
-    // The following lines must be uncomment for podman.
     "runArgs": [
         //    "--userns=keep-id:uid=1000,gid=1000"
     ],
-    // "containerUser": "vscode",
-    // "updateRemoteUserUID": true,
-    "containerEnv": {
-        "HOME": "/home/vscode"
-    }
+    "workspaceFolder": "/workspaces/app",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/app,type=bind"
 }

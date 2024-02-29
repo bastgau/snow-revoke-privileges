@@ -1,5 +1,5 @@
 # See here for image contents:
-ARG VARIANT="3.10-bullseye"
+ARG VARIANT="3.11-bullseye"
 FROM mcr.microsoft.com/vscode/devcontainers/python:0-${VARIANT}
 
 ARG WORKSPACE_FOLDER="/workspaces/app"
@@ -11,7 +11,9 @@ WORKDIR $WORKSPACE_FOLDER
 
 RUN mkdir /tmp/config_container
 
-COPY /.devcontainer/install-deps.sh /tmp/config_container/install-deps.sh
+COPY /.devcontainer/install-deps.sh /tmp/config_container/install-deps.sh_
+
+RUN tr -d '\015' < /tmp/config_container/install-deps.sh_>/tmp/config_container/install-deps.sh
 RUN chmod +x /tmp/config_container/install-deps.sh
 RUN /tmp/config_container/install-deps.sh
 

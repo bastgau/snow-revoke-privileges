@@ -11,22 +11,10 @@ snowflake:
     # authenticator: needed for a connection through SSO.
     # authenticator: externalbrowser
 
+    role: ACCOUNTADMIN
+
 settings:
   run_dry: true
-  new_owner: ACCOUNTADMIN
+  new_owner: SYSADMIN
   databases:
-    - DEV_TLS
-    - DEV_LND
-    - DEV_BRZ
-    - DEV_SLV
-    - DEV_GLD
-    - TST_TLS
-    - TST_LND
-    - TST_BRZ
-    - TST_SLV
-    - TST_GLD
-    - PRD_TLS
-    - PRD_LND
-    - PRD_BRZ
-    - PRD_SLV
-    - PRD_GLD
+    - DEV

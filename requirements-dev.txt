@@ -1,4 +1,3 @@
-pylama
 pylint
 mypy
 yapf
@@ -7,4 +6,3 @@ types-PyYAML
 pandas-stubs
 yamllint
 pyright
-# black

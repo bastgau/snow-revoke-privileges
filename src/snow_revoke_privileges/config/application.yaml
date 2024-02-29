@@ -1,0 +1,15 @@
+---
+databases_to_ignore:
+  - SNOWFLAKE
+  - WORKSHEETS_APP
+
+schemas_to_ignore:
+  - INFORMATION_SCHEMA
+
+expected_columns:
+  - DATABASE_NAME
+  - SCHEMA_NAME
+  - OBJECT_NAME
+  - KEY_OBJECT
+  - ARGUMENTS
+  - OBJECT_TYPE

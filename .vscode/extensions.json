@@ -1,14 +1,6 @@
 {
     "recommendations": [
-        "njpwerner.autodocstring",
-        "rogalmic.bash-debug",
-        "aaron-bond.better-comments",
-        "streetsidesoftware.code-spell-checker",
         "mohsen1.prettify-json",
-        "vscode-icons-team.vscode-icons",
-        "foxundermoon.shell-format",
-        "sanaajani.taskrunnercode",
-        "gruntfuggly.todo-tree",
-        "redhat.vscode-yaml"
+        "vscode-icons-team.vscode-icons"
     ]
 }

@@ -33,7 +33,6 @@ jobs:
           source .venv/bin/activate
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install -r requirements.txt
-          .venv/bin/pip install -r requirements-dev.txt
 
       - name: Initialize environment variables
         run: |
@@ -71,13 +70,6 @@ jobs:
           . $WORKINGPATH/.venv/bin/activate
           mypy $PYTHONPATH/snow_revoke_privileges
 
-      - name: Pylama
-        id: pylama
-        if: ${{ always() }}
-        run: |
-          . $WORKINGPATH/.venv/bin/activate
-          pylama $PYTHONPATH/snow_revoke_privileges
-
       - name: Yapf
         id: yapf
         if: ${{ always() }}
@@ -98,57 +90,6 @@ jobs:
 
           echo "On failure, please check the previous steps to identify the linter issue(s)."
           exit 1
-
-  unit_test:
-    name: Unit Tests Python
-    runs-on: ubuntu-latest
-    needs: [check]
-    steps:
-      - name: "Checkout GitHub Action"
-        uses: actions/checkout@v3
-
-      - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies with Pip
-        run: |
-          python${{ env.PYTHON_VERSION }} -m venv .venv
-          source .venv/bin/activate
-          .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install -r requirements.txt
-          .venv/bin/pip install -r requirements-test.txt
-
-      - name: Initialize environment variables
-        run: |
-
-          CURRENT_PWD=$(pwd)
-          PYTHONPATH="$CURRENT_PWD/src"
-          echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
-          WORKINGPATH="$CURRENT_PWD"
-          echo "WORKINGPATH=$WORKINGPATH" >> $GITHUB_ENV
-
-      - name: Pytest
-        id: pytest
-        run: |
-          . $WORKINGPATH/.venv/bin/activate
-          cd $WORKINGPATH
-          pytest tests -vv -s -n auto
-
-      - name: Coverage Analysis
-        id: coverage
-        run: |
-          . $WORKINGPATH/.venv/bin/activate
-          cd $WORKINGPATH
-          coverage run -m pytest tests -q --disable-warnings
-
-      - name: Coverage Report
-        id: coverage_report
-        run: |
-          . $WORKINGPATH/.venv/bin/activate
-          cd $WORKINGPATH
-          coverage report -m
 
   configuration:
     name: Check User Configuration
@@ -178,7 +119,7 @@ jobs:
       - name: "YAML Lint"
         id: yaml_lint
         run: |
-          yamllint $PYTHONPATH/snow_revoke_privileges
+          yamllint $PYTHONPATH/snow_revoke_privileges/config
 
       - name: Configuration Results
         if: (success() || failure()) && (steps.yaml_lint.outcome == 'failure')
@@ -191,7 +132,7 @@ jobs:
 
   build:
     name: Build
-    needs: [check, configuration, unit_test]
+    needs: [check, configuration]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:

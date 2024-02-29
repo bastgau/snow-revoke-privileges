@@ -1,6 +1,7 @@
 """tools/my_snowflake.py"""
 
-from typing import Any, Dict, List
+import re
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -10,85 +11,108 @@ from snowflake.connector import SnowflakeConnection
 from snow_revoke_privileges.tools.my_dataframe import create_dataframe
 
 
-def configure(config: Dict[str, Any], role: str) -> SnowflakeConnection:  # pylint: disable=unused-variable
-    """
-    The function configures a Snowflake connection with a specified role.
+class MySnowflake:
+    """..."""
 
-    Args:
-    config (Dict[str, Any]): A dictionary containing the configuration parameters for connecting to a
-    Snowflake database. This could include parameters such as the account name, user name and a password.
-    role (str): The `role` parameter is a string that represents the Snowflake role that the
-    connection should use. When a user or role connects to Snowflake, they assume the privileges of the role they
-    specify.
+    snow_cnn: SnowflakeConnection
 
-    Returns:
-    a SnowflakeConnection object.
-    """
+    @staticmethod
+    def initialize_database(config: Dict[str, Any]) -> None:
+        """
+        The function initializes a Snowflake database connection using credentials and admin role specified
+        in the configuration.
+        """
 
-    cnx: SnowflakeConnection = sc.connect(**config)  # type: ignore
-    cur = cnx.cursor(sc.DictCursor)
-    cur.execute(f"USE ROLE {role};")
+        cnx: SnowflakeConnection = sc.connect(**config)  # type: ignore
+        cur = cnx.cursor(sc.DictCursor)
+        cur.execute(f"USE ROLE {config['role']};")
 
-    print("Connection with Snowflake: OK")
+        print("Connection with Snowflake: OK")
 
-    return cnx
+        MySnowflake.snow_cnn = cnx
 
+    @staticmethod
+    def fetch_pandas_all(request: str) -> pd.DataFrame:  # pylint: disable=unused-variable
+        """
+        The function fetches data from a Snowflake database using a provided SQL query and returns it as a
+        pandas DataFrame.
 
-def fetch_pandas_all(cnx: SnowflakeConnection, request: str) -> pd.DataFrame:  # pylint: disable=unused-variable
-    """
-    The function fetches data from a Snowflake database using a provided SQL query and returns it as a
-    pandas DataFrame.
+        Args:
+        cnx (SnowflakeConnection): The parameter `cnx` is a SnowflakeConnection object, which represents a
+        connection to a Snowflake database. It is used to execute SQL queries and fetch results from the
+        database.
+        request (str): The SQL query to be executed on the Snowflake database.
 
-    Args:
-      cnx (SnowflakeConnection): The parameter `cnx` is a SnowflakeConnection object, which represents a
-    connection to a Snowflake database. It is used to execute SQL queries and fetch results from the
-    database.
-      request (str): The SQL query to be executed on the Snowflake database.
+        Returns:
+        a pandas DataFrame created from the results of a SQL query executed on a Snowflake database
+        connection.
+        """
 
-    Returns:
-      a pandas DataFrame created from the results of a SQL query executed on a Snowflake database
-    connection.
-    """
+        cur = MySnowflake.snow_cnn.cursor(sc.DictCursor)
 
-    cur = cnx.cursor(sc.DictCursor)
+        try:
+            cur.execute(request)
+            all_rows: List[Dict[Any, Any]] = cur.fetchall()  # type: ignore
+            field_names: List[str] = [i[0] for i in cur.description]
+        finally:
+            cur.close()
 
-    try:
-        cur.execute(request)
-        all_rows: List[Dict[Any, Any]] = cur.fetchall()  # type: ignore
-        field_names: List[str] = [i[0] for i in cur.description]
-    finally:
-        cur.close()
+        return create_dataframe(all_rows, field_names)
 
-    return create_dataframe(all_rows, field_names)
+    @staticmethod
+    def execute_single_request(request: str) -> None:  # pylint: disable=unused-variable
+        """
+        The function executes a single SQL request using a Snowflake connection and a cursor.
 
+        Args:
+        cnx (SnowflakeConnection): The parameter `cnx` is of type `SnowflakeConnection`, which is a
+        connection object used to connect to a Snowflake database. It is likely created using the
+        `snowflake.connector.connect()` method.
+        request (str): The `request` parameter is a string that contains a SQL query to be executed on a
+        Snowflake database. The function `execute_single_request` takes this query as input and executes it
+        using the provided `cnx` connection object. The result of the query execution is not returned by
+        this function.
+        """
 
-def execute_single_request(cnx: SnowflakeConnection, request: str) -> None:  # pylint: disable=unused-variable
-    """
-    The function executes a single SQL request using a Snowflake connection and a cursor.
+        try:
+            cur = MySnowflake.snow_cnn.cursor(sc.DictCursor)
+            cur.execute(request)
+        except Exception as err:  # pylint: disable=broad-exception-caught
+            print(f"SQL request : '{request}' has failed ({type(err)}).\n")
 
-    Args:
-      cnx (SnowflakeConnection): The parameter `cnx` is of type `SnowflakeConnection`, which is a
-    connection object used to connect to a Snowflake database. It is likely created using the
-    `snowflake.connector.connect()` method.
-      request (str): The `request` parameter is a string that contains a SQL query to be executed on a
-    Snowflake database. The function `execute_single_request` takes this query as input and executes it
-    using the provided `cnx` connection object. The result of the query execution is not returned by
-    this function.
-    """
+    @staticmethod
+    def execute_multi_requests(requests: List[str]) -> None:  # pylint: disable=unused-variable
+        """
+        The function executes multiple SQL requests using a Snowflake connection object.
 
-    cur = cnx.cursor(sc.DictCursor)
-    cur.execute(request)
+        Args:
+        cnx (SnowflakeConnection): The parameter "cnx" is of type SnowflakeConnection, which is likely a
+        connection object to a Snowflake database.
+        requests (List[str]): A list of SQL queries to be executed on a Snowflake database connection.
+        """
 
+        for request in requests:
+            MySnowflake.execute_single_request(request)
 
-def execute_multi_requests(cnx: SnowflakeConnection, requests: List[str]) -> None:  # pylint: disable=unused-variable
-    """
-    The function executes multiple SQL requests using a Snowflake connection object.
+    @staticmethod
+    def get_arguments(arguments: Optional[str]) -> str:
+        """
+        The function extracts the procedure stored of function arguments from a string returned by the SHOW command.
 
-    Args:
-      cnx (SnowflakeConnection): The parameter "cnx" is of type SnowflakeConnection, which is likely a
-    connection object to a Snowflake database.
-      requests (List[str]): A list of SQL queries to be executed on a Snowflake database connection.
-    """
+        Args:
+            arguments (str): The `arguments` parameter is a string that represents a complete argument string provided by a SHOW command.
 
-    for request in requests:
-        execute_single_request(cnx, request)
+        Returns:
+            a string containing only the arguments.
+        """
+
+        if arguments is None or arguments == "None":
+            return ""
+
+        regex = r"[^\(]+(\([^\)]*\)).*"
+        matches = re.search(regex, arguments, re.DOTALL)
+
+        if matches:
+            return str(matches.groups(1)[0])
+
+        return ""

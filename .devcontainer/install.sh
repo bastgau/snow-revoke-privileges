@@ -93,7 +93,6 @@ then
 
     pip install -r $WORKDIR/requirements.txt
     pip install -r $WORKDIR/requirements-dev.txt
-    pip install -r $WORKDIR/requirements-test.txt
 
 fi
 

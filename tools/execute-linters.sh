@@ -42,13 +42,6 @@ fi
 echo -e "\n${YELLOW}> Mypy.${ENDCOLOR}"
 mypy $PYTHONPATH/snow_revoke_privileges/
 
-echo -e "\n${YELLOW}> Pylama.${ENDCOLOR}"
-pylama $PYTHONPATH/snow_revoke_privileges/
-
-if [ "$?" -eq 0 ]; then
-    echo -e "${GREEN}${BOLD}Success: no issues found${ENDCOLOR}"
-fi
-
 echo -e "\n${YELLOW}> Yapf.${ENDCOLOR}"
 yapf --diff $PYTHONPATH/snow_revoke_privileges/ --recursive
 

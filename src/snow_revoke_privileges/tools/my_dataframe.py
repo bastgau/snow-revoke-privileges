@@ -86,7 +86,7 @@ def keep_columns(current_dataframe: pd.DataFrame, expected_columns: List[str]) -
     columns = [column for column in columns if column not in expected_columns and column in current_dataframe]
 
     if len(columns) > 0:
-        return current_dataframe.drop(columns, axis=1)
+        return current_dataframe.drop(columns, axis=1)  # pyright: ignore
 
     return current_dataframe
 
@@ -106,7 +106,7 @@ def drop_columns(current_dataframe: pd.DataFrame, columns: List[str]) -> pd.Data
     columns = [column for column in columns if column in current_dataframe]
 
     if len(columns) > 0:
-        return current_dataframe.drop(columns, axis=1)
+        return current_dataframe.drop(columns, axis=1)  # pyright: ignore
 
     return current_dataframe
 

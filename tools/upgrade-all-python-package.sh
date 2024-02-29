@@ -16,6 +16,3 @@ pip install -r $WORKDIR/requirements.txt --upgrade
 
 echo -e "\n${YELLOW}> Use: requirements-dev.txt${ENDCOLOR}\n"
 pip install -r $WORKDIR/requirements-dev.txt --upgrade
-
-echo -e "\n${YELLOW}> Use: requirements-test.txt${ENDCOLOR}\n"
-pip install -r $WORKDIR/requirements-dev.txt --upgrade

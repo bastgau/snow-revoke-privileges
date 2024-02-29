@@ -4,28 +4,18 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
         {
             "name": "Python : Current file",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal"
         },
         {
             "name": "Execute Snow Revoke Privileges",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "snow_revoke_privileges"
-        },
-        {
-            "type": "bashdb",
-            "request": "launch",
-            "name": "Execute Local CI",
-            "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/tools/execute-linters.sh",
-            "terminalKind": "integrated",
-            "args": []
         }
     ]
 }
