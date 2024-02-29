@@ -26,7 +26,7 @@ python -m snow_revoke_privileges
 
 The project uses [pip](https://pypi.org/project/pip/) as package installer.
 
-A configuration file named __config.yaml__ must be created using the same format as [config-example.yaml](https://github.com/bastgau/snow-revoke-privileges/blob/master/snow_revoke_privileges/config-example.yaml).
+A configuration file named __config.yaml__ must be created using the same format as [config-example.yaml](https://github.com/bastgau/snow-revoke-privileges/blob/master/src/snow_revoke_privileges/config/config-example.yaml).
 
 You have to use an account with the permissions to **REVOKE PRIVILEGE** and **GRANT OWNERSHIP**.
 
