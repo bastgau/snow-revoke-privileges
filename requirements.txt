@@ -2,3 +2,4 @@ pandas
 pyyaml
 snowflake-connector-python
 coloredlogs
+progress
