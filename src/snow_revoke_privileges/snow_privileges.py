@@ -1,6 +1,11 @@
 """..."""
 
+import logging
 from typing import Any, Dict, Optional
+
+from multiprocessing import Pool
+
+from progress.bar import Bar  # pyright: ignore
 import pandas as pd
 
 from snow_revoke_privileges.tools.my_snowflake import MySnowflake
@@ -21,7 +26,7 @@ class SnowPrivileges:  # pylint: disable=unused-variable
     all_privileges: pd.DataFrame
 
     settings: Dict[str, Any] = {}
-    snowflake_credentials: Dict[str, Any] = {}
+    progress: Optional[Bar] = None
 
     def __init__(self, all_objects: pd.DataFrame) -> None:
         """..."""
@@ -32,58 +37,92 @@ class SnowPrivileges:  # pylint: disable=unused-variable
     def prepare(self) -> None:
         """..."""
 
-        self.__prepare_future_false()
-        self.__prepare_future_true()
+        logging.getLogger("app").info("The SQL objects concerned by 'GRANT' and 'OWNERSHIP' will be extracted from Snowflake.")
+        self.prepare_future_false()
 
-    def __prepare_future_false(self) -> None:
+        logging.getLogger("app").info("The SQL objects (database & schemas) concerned by 'GRANT ON FUTURE' will be extracted from Snowflake.")
+        self.prepare_future_true()
+
+    def prepare_future_false(self) -> None:
         """..."""
 
-        current_object: Any
+        self.progress = Bar("Processing", max=len(self.all_objects))
 
-        for _, current_object in self.all_objects.iterrows():  # type: ignore # pylint: disable=unused-variable
+        with Pool(processes=8) as pool:
+            for privileges in pool.imap_unordered(self.prepare_future_false_task, self.all_objects.iterrows()):  # pyright: ignore
 
-            object_type: str = str(current_object.get(key="OBJECT_TYPE"))
-            object_name: str = str(current_object.get(key="KEY_OBJECT"))
-            arguments: str = str(current_object.get(key="ARGUMENTS"))
+                if privileges is not None:
+                    self.all_privileges = concat_dataframe([self.all_privileges, privileges])
 
-            arguments = MySnowflake.get_arguments(arguments)
+                self.progress.next()
 
-            privileges: pd.DataFrame = self.__request_retrieve_grants(object_type, object_name, False, arguments)
-            privileges["OWNERSHIP"] = privileges["privilege"] == "OWNERSHIP"
-
-            index_to_drop: Any = privileges[(privileges["OWNERSHIP"] == True) & (privileges["grantee_name"] == self.settings["new_owner"])  # noqa: E712 # pylint: disable=singleton-comparison
-                                            ].index  # pyright: ignore
-
-            privileges = privileges.drop(index_to_drop)  # pyright: ignore
-
-            if len(privileges) > 0:
-
-                privileges = privileges.reset_index(drop=True)
-
-                privileges = self.__prepare_dataframe(privileges, False, {"object_name": object_name, "object_type": object_type, "arguments": arguments})
-                self.all_privileges = concat_dataframe([self.all_privileges, privileges])
-
-    def __prepare_future_true(self) -> None:
+    def prepare_future_false_task(self, row: Any) -> Optional[pd.DataFrame]:
         """..."""
 
-        current_object: Any
+        current_object: pd.Series[Any] = row[1]  # pylint: disable=unsubscriptable-object
+
+        object_type: str = str(current_object.get(key="OBJECT_TYPE"))
+        object_name: str = str(current_object.get(key="KEY_OBJECT"))
+        arguments: str = str(current_object.get(key="ARGUMENTS"))
+
+        arguments = MySnowflake.get_arguments(arguments)
+
+        privileges: pd.DataFrame = self.__request_retrieve_grants(object_type, object_name, False, arguments)
+        privileges["OWNERSHIP"] = privileges["privilege"] == "OWNERSHIP"
+
+        # yapf: disable
+
+        index_to_drop: Any = privileges[
+            (privileges["OWNERSHIP"] == True) & (privileges["grantee_name"] == self.settings["new_owner"])  # noqa: E712 # pylint: disable=singleton-comparison
+        ].index  # pyright: ignore
+
+        # yapf: enable
+
+        privileges = privileges.drop(index_to_drop)  # pyright: ignore
+
+        if len(privileges) > 0:
+
+            privileges = privileges.reset_index(drop=True)
+
+            privileges = self.__prepare_dataframe(privileges, False, {"object_name": object_name, "object_type": object_type, "arguments": arguments})
+            return privileges
+
+        return None
+
+    def prepare_future_true(self) -> None:
+        """..."""
 
         only_database_schema: pd.DataFrame = self.all_objects.loc[self.all_objects["OBJECT_TYPE"].isin(["DATABASE", "SCHEMA"])]  # type: ignore
         only_database_schema = only_database_schema.reset_index(drop=True)
 
-        for _, current_object in only_database_schema.iterrows():  # type: ignore # pylint: disable=unused-variable
+        self.progress = Bar("Processing", max=len(only_database_schema))
 
-            object_type: str = str(current_object.get(key="OBJECT_TYPE"))
-            object_name: str = str(current_object.get(key="KEY_OBJECT"))
-            arguments: str = str(current_object.get(key="ARGUMENTS"))
+        with Pool(processes=16) as pool:
+            for _ in pool.imap_unordered(self.prepare_future_true_task, only_database_schema.iterrows()):  # pyright: ignore
+                self.progress.next()
 
-            arguments = MySnowflake.get_arguments(arguments)
+    def prepare_future_true_task(self, row: Any) -> Optional[pd.DataFrame]:
+        """..."""
 
-            privileges = self.__request_retrieve_grants(object_type, object_name, True)
+        current_object: pd.Series[Any] = row[1]  # pylint: disable=unsubscriptable-object
 
-            if len(privileges) > 0:
-                privileges = self.__prepare_dataframe(privileges, True, {"object_name": object_name, "object_type": object_type, "arguments": arguments})
-                self.all_privileges = concat_dataframe([self.all_privileges, privileges])
+        object_type: str = str(current_object.get(key="OBJECT_TYPE"))
+        object_name: str = str(current_object.get(key="KEY_OBJECT"))
+        arguments: str = str(current_object.get(key="ARGUMENTS"))
+
+        arguments = MySnowflake.get_arguments(arguments)
+
+        privileges = self.__request_retrieve_grants(object_type, object_name, True)
+
+        if len(privileges) > 0:
+            privileges = self.__prepare_dataframe(privileges, True, {"object_name": object_name, "object_type": object_type, "arguments": arguments})
+            return privileges
+
+        return None
+
+    def get_dataframe(self) -> pd.DataFrame:
+        """..."""
+        return self.all_privileges
 
     def __prepare_dataframe(self, privileges: pd.DataFrame, future: bool, object_info: Dict[str, str]) -> pd.DataFrame:
         """..."""
@@ -120,17 +159,8 @@ class SnowPrivileges:  # pylint: disable=unused-variable
 
         return grants
 
-    def get_dataframe(self) -> pd.DataFrame:
-        """..."""
-        return self.all_privileges
-
     def __load_configuration(self) -> None:
         """..."""
 
         config: Configuration = Configuration()
-
         self.settings = config.get_user_configuration("settings")
-        self.snowflake_credentials = config.get_user_configuration("snowflake_credentials")
-        self.schemas_to_ignore = config.get_application_configuration("schemas_to_ignore")
-        self.expected_columns = config.get_application_configuration("expected_columns")
-        self.databases_to_ignore = config.get_application_configuration("databases_to_ignore")

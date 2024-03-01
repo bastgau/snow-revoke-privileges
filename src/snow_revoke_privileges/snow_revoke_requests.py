@@ -1,9 +1,10 @@
 """..."""
 
+import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-import os
 import pandas as pd
 
 from snow_revoke_privileges.tools.my_snowflake import MySnowflake
@@ -37,13 +38,14 @@ class SnowRevokeRequests:  # pylint: disable=unused-variable
     def execute(self) -> None:
         """"..."""
 
-        self.__execute_part(self.grant_requests, "revoke-grants")
-        self.__execute_part(self.ownership_requests, "ownerships")
+        self.__execute_part(self.grant_requests, "revoke")
+        self.__execute_part(self.ownership_requests, "grant ownership")
 
     def __execute_part(self, requests: List[str], request_type: str) -> None:
         """"..."""
 
-        filename: str = f"output-{request_type}.txt"
+        config: Configuration = Configuration()
+        filename: str = config.get_output_path(f"output-{request_type}.sql")
 
         if os.path.exists(filename):
             os.remove(filename)
@@ -51,17 +53,24 @@ class SnowRevokeRequests:  # pylint: disable=unused-variable
         Path(filename).touch()
 
         if len(requests) == 0:
+            logging.getLogger("app").info("No %s requests must be performed.", request_type.upper())
             return
 
-        with open(f"output-{request_type}.txt", "w", encoding="utf-8") as file:
+        with open(filename, "w", encoding="utf-8") as file:
 
             file.write("-- Ready ...\n")
             file.write(";\n".join(requests))
 
             if self.settings["run_dry"] is False:
+                logging.getLogger("app").info("A total of %s %s requests will be performed.", len(requests), request_type.upper())
                 MySnowflake.execute_multi_requests(requests)
+                logging.getLogger("app").info("All %s requests were now performed.", request_type.upper())
+            else:
+                logging.getLogger("app").warning("No %s request will be performed as requested by the user (run_dry=True).", request_type.upper())
 
             file.write("\n-- ... Done.")
+
+            logging.getLogger("app").info("The SQL requests generated will be availaible in the file 'output-%s.sql'.", request_type)
 
     def prepare(self) -> None:
         """..."""
@@ -70,6 +79,8 @@ class SnowRevokeRequests:  # pylint: disable=unused-variable
 
     def __prepare_grants(self) -> None:
         """..."""
+
+        logging.getLogger("app").info("The requests related to the REVOKE will be generated now.")
 
         current_privilege: Any
 
@@ -90,6 +101,8 @@ class SnowRevokeRequests:  # pylint: disable=unused-variable
 
     def __prepare_ownerships(self) -> None:
         """..."""
+
+        logging.getLogger("app").info("The requests related to the GRANT OWNERSHIP will be generated now.")
 
         current_privilege: Any
 

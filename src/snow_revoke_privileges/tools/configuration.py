@@ -18,15 +18,7 @@ class Configuration:  # pylint: disable=unused-variable
         return self.get_configuration(key, "application.yaml")
 
     def get_configuration(self, key: str, filename: str) -> Any:
-        """
-        This function reads the YAML configuration file and returns the value of a specified key.
-
-        Args:
-            key (str): Key of the configuration value that needs to be retrieved (snowflake or settings)
-
-        Returns:
-            a dictionary with the configuration values for the specified key.
-        """
+        """..."""
 
         config_file_path: str = f"{os.path.dirname(__file__)}{os.sep}..{os.sep}config{os.sep}{filename}"
         config_file_path = os.path.realpath(config_file_path)
@@ -35,3 +27,11 @@ class Configuration:  # pylint: disable=unused-variable
             config: Dict[str, Dict[str, Any]] = json.loads(str(json.dumps(yaml.safe_load(file))))
 
         return config[key]
+
+    def get_output_path(self, filename: str) -> Any:
+        """..."""
+
+        output_path: str = f"{os.path.dirname(__file__)}{os.sep}..{os.sep}output{os.sep}{filename}"
+        output_path = os.path.realpath(output_path)
+
+        return output_path

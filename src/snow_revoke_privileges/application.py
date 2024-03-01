@@ -1,7 +1,9 @@
 """reset_privilege.py"""
 
 from typing import Any, Dict, Optional
+import logging
 
+import coloredlogs  # pyright: ignore
 import pandas as pd
 
 from snowflake.connector import SnowflakeConnection
@@ -32,6 +34,7 @@ class Application:  # pylint: disable=unused-variable
     def __init__(self) -> None:
         """..."""
         self.__load_configuration()
+        self.__init_logger()
 
     def execute(self) -> None:
         """
@@ -61,7 +64,14 @@ class Application:  # pylint: disable=unused-variable
 
     def __load_configuration(self) -> None:
         """..."""
-
         config: Configuration = Configuration()
         self.settings = config.get_user_configuration("settings")
         self.snowflake_credentials = config.get_user_configuration("snowflake_credentials")
+
+    def __init_logger(self) -> None:
+        """..."""
+        logger: logging.Logger = logging.getLogger("app")
+
+        level_name: str = self.settings["log_level"].upper()
+        fmt: str = "%(asctime)s %(name)s %(levelname)s %(message)s"
+        coloredlogs.install(fmt=fmt, level=level_name, logger=logger)  # pyright: ignore

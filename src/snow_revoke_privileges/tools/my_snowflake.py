@@ -1,7 +1,12 @@
 """tools/my_snowflake.py"""
 
+import logging
 import re
 from typing import Any, Dict, List, Optional
+
+from multiprocessing import Pool
+
+from progress.bar import Bar  # pyright: ignore
 
 import pandas as pd
 
@@ -27,7 +32,7 @@ class MySnowflake:
         cur = cnx.cursor(sc.DictCursor)
         cur.execute(f"USE ROLE {config['role']};")
 
-        print("Connection with Snowflake: OK")
+        logging.getLogger("app").debug("Connection with Snowflake: OK")
 
         MySnowflake.snow_cnn = cnx
 
@@ -78,7 +83,7 @@ class MySnowflake:
             cur = MySnowflake.snow_cnn.cursor(sc.DictCursor)
             cur.execute(request)
         except Exception as err:  # pylint: disable=broad-exception-caught
-            print(f"SQL request : '{request}' has failed ({type(err)}).\n")
+            logging.getLogger("app").fatal("SQL request : '%s' has failed (%s).", request, type(err))
 
     @staticmethod
     def execute_multi_requests(requests: List[str]) -> None:  # pylint: disable=unused-variable
@@ -91,8 +96,11 @@ class MySnowflake:
         requests (List[str]): A list of SQL queries to be executed on a Snowflake database connection.
         """
 
-        for request in requests:
-            MySnowflake.execute_single_request(request)
+        with Bar("Executing request in Snwoflake", max=len(requests)) as progress:
+
+            with Pool(processes=4) as pool:
+                for _ in pool.imap_unordered(MySnowflake.execute_single_request, requests):  # pyright: ignore
+                    progress.next()
 
     @staticmethod
     def get_arguments(arguments: Optional[str]) -> str:

@@ -1,7 +1,10 @@
 """..."""
 
+import logging
 from typing import Any, Dict, List
 import pandas as pd
+
+from progress.bar import Bar  # pyright: ignore
 
 from snow_revoke_privileges.tools.my_snowflake import MySnowflake
 from snow_revoke_privileges.tools.configuration import Configuration
@@ -48,20 +51,26 @@ class SnowObjects:  # pylint: disable=unused-variable
     def filter(self) -> None:
         """..."""
 
-        print(f"Total objects before filtering on database: {len(self.all_objects)}.")
+        logging.getLogger("app").debug("A total of %s objects was found in the account.", len(self.all_objects))
+
         # On supprime de nos objets, tous les objets qui ne sont pas rattachés aux bases sur lesquelles nous travaillons.
         self.all_objects = self.all_objects.loc[self.all_objects["DATABASE_NAME"].isin(self.settings["databases"])]  # type: ignore
         self.all_objects = self.all_objects.reset_index(drop=True)
-        print(f"Total objects after filtering on database: {len(self.all_objects)}.")
+
+        logging.getLogger("app").debug("A total of %s objects related to the database selected in the configuration was kept.", len(self.all_objects))
 
     def retrieve(self) -> None:
         """..."""
 
+        logging.getLogger("app").info("The Snowflake account will be now analyzed to retrieve all SQL objects.")
+
         database_objects = self.settings["objects"]
 
-        for database_object in database_objects:
-            self.retrieve_object(database_object)
-            print(f"Prepare {database_object}: Done.")
+        with Bar("Processing", max=len(database_objects)) as progress:
+
+            for database_object in database_objects:
+                self.retrieve_object(database_object)
+                progress.next()
 
     def get_dataframe(self) -> pd.DataFrame:
         """..."""
@@ -79,8 +88,7 @@ class SnowObjects:  # pylint: disable=unused-variable
         """
 
         snow_objects: pd.DataFrame = MySnowflake.fetch_pandas_all(f"SHOW {object_type}S IN ACCOUNT", )
-
-        print(f"Found: {len(snow_objects)} {object_type.lower()}(s).")
+        logging.getLogger("app").debug("Found: A total of %s '%s' was found in account.", len(snow_objects), object_type.upper())
 
         if len(snow_objects) == 0:
             return
