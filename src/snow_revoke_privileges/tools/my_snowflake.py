@@ -98,7 +98,7 @@ class MySnowflake:
 
         with Bar("Executing request in Snwoflake", max=len(requests)) as progress:
 
-            with Pool(processes=4) as pool:
+            with Pool(processes=8) as pool:
                 for _ in pool.imap_unordered(MySnowflake.execute_single_request, requests):  # pyright: ignore
                     progress.next()
 

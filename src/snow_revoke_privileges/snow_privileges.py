@@ -97,7 +97,7 @@ class SnowPrivileges:  # pylint: disable=unused-variable
 
         self.progress = Bar("Processing", max=len(only_database_schema))
 
-        with Pool(processes=16) as pool:
+        with Pool(processes=8) as pool:
             for _ in pool.imap_unordered(self.prepare_future_true_task, only_database_schema.iterrows()):  # pyright: ignore
                 self.progress.next()
 
