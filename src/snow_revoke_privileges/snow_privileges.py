@@ -56,6 +56,8 @@ class SnowPrivileges:  # pylint: disable=unused-variable
 
                 self.progress.next()
 
+        self.progress.finish()
+
     def prepare_future_false_task(self, row: Any) -> Optional[pd.DataFrame]:
         """..."""
 
@@ -100,6 +102,8 @@ class SnowPrivileges:  # pylint: disable=unused-variable
         with Pool(processes=8) as pool:
             for _ in pool.imap_unordered(self.prepare_future_true_task, only_database_schema.iterrows()):  # pyright: ignore
                 self.progress.next()
+
+        self.progress.finish()
 
     def prepare_future_true_task(self, row: Any) -> Optional[pd.DataFrame]:
         """..."""

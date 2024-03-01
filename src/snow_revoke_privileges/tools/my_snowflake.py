@@ -96,7 +96,7 @@ class MySnowflake:
         requests (List[str]): A list of SQL queries to be executed on a Snowflake database connection.
         """
 
-        with Bar("Executing request in Snwoflake", max=len(requests)) as progress:
+        with Bar("Executing request in Snowflake", max=len(requests)) as progress:
 
             with Pool(processes=8) as pool:
                 for _ in pool.imap_unordered(MySnowflake.execute_single_request, requests):  # pyright: ignore
